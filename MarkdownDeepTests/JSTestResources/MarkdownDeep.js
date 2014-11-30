@@ -52,6 +52,7 @@ var MarkdownDeep = new function () {
         NewWindowForExternalLinks: false,
         NewWindowForLocalLinks: false,
         NoFollowLinks: false,
+        NoFollowExternalLinks: false,
         HtmlClassFootnotes: "footnotes",
         HtmlClassTitledImages: null,
         RenderingTitledImage: false,
@@ -213,6 +214,10 @@ var MarkdownDeep = new function () {
     }
 
     Markdown.prototype.OnQualifyUrl = function (url) {
+        // Is the url a fragment?
+        if (starts_with(url, "#"))
+            return url;
+
         // Is the url already fully qualified?
         if (IsUrlFullyQualified(url))
             return url;
@@ -267,6 +272,12 @@ var MarkdownDeep = new function () {
             tag.attributes["rel"] = "nofollow";
         }
 
+        if (this.NoFollowExternalLinks) {
+            if (IsUrlFullyQualified(url)) {
+                tag.attributes["rel"] = "nofollow";
+            }
+        }
+
         // New window?
         if ((this.NewWindowForExternalLinks && IsUrlFullyQualified(url)) ||
 			 (this.NewWindowForLocalLinks && !IsUrlFullyQualified(url))) {
@@ -291,11 +302,10 @@ var MarkdownDeep = new function () {
 
     // Get a link definition
     Markdown.prototype.GetLinkDefinition = function (id) {
-        var x = this.m_LinkDefinitions[id];
-        if (x == undefined)
-            return null;
+        if (this.m_LinkDefinitions.hasOwnProperty(id))
+            return this.m_LinkDefinitions[id];
         else
-            return x;
+            return null;
     }
 
 
@@ -2165,7 +2175,7 @@ var MarkdownDeep = new function () {
             return this.CreateToken(TokenType_closing_mark, savepos, p.m_position - savepos);
         }
 
-        if (this.m_Markdown.ExtraMode && ch == '_')
+        if (this.m_Markdown.ExtraMode && ch == '_' && is_alphadigit(p.current()))
             return null;
 
 
@@ -2600,7 +2610,7 @@ var MarkdownDeep = new function () {
 
     p.ResolveHeaderID = function (m) {
         // Already resolved?
-        if (this.data != null)
+        if (typeof (this.data) == 'string')
             return this.data;
 
         // Approach 1 - PHP Markdown Extra style header id
@@ -3407,7 +3417,7 @@ var MarkdownDeep = new function () {
 
 
             // Fenced code blocks?
-            if (ch == '~') {
+            if (ch == '~' || ch == '`') {
                 if (this.ProcessFencedCodeBlock(p, b))
                     return b.blockType;
 
@@ -4138,9 +4148,11 @@ var MarkdownDeep = new function () {
     p.ProcessFencedCodeBlock = function (p, b) {
         var fenceStart = p.m_position;
 
+        var delim = p.current();
+
         // Extract the fence
         p.Mark();
-        while (p.current() == '~')
+        while (p.current() == delim)
             p.SkipForward(1);
         var strFence = p.Extract();
 
@@ -4233,7 +4245,7 @@ var MarkdownDeep = new function () {
             // Find the next vertical bar
             p.Mark();
             while (!p.eol() && p.current() != '|')
-                p.SkipForward(1);
+                p.SkipEscapableChar(true);
 
             row.push(Trim(p.Extract()));
 
@@ -4378,4 +4390,8 @@ var MarkdownDeep = new function () {
     this.Markdown = Markdown;
     this.HtmlTag = HtmlTag;
 } ();
+
+// Export to nodejs
+if (typeof exports !== 'undefined')
+    exports.Markdown = MarkdownDeep.Markdown;
 
