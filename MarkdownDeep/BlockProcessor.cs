@@ -1343,7 +1343,7 @@ namespace MarkdownDeep
 					{
 						var l = lines[j];
 						sb.Append(l.buf, l.contentStart, l.contentLen);
-                        hint.Append(l.hint, l.contentStart, l.contentEnd);
+                        hint.Append(l.hint, l.contentStart, l.contentLen);
                         sb.Append('\n');
                         hint.AppendSpace();
 

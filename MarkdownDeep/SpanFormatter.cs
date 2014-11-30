@@ -55,7 +55,9 @@ namespace MarkdownDeep
 				// Render the title
 				if (!String.IsNullOrEmpty(li.def.title))
 				{
-					dest.Append("<p>");
+                    dest.Append("<p");
+                    dest.Append(GetDataPosHtmlAttribute(m_Markdown,start,len,hint));
+                    dest.Append(">");
 					Utils.SmartHtmlEncodeAmpsAndAngles(dest, li.def.title);
 					dest.Append("</p>\n");
 				}
@@ -65,12 +67,32 @@ namespace MarkdownDeep
 			else
 			{
 				// Render the paragraph
-				dest.Append("<p>");
+                dest.Append("<p");
+                dest.Append(GetDataPosHtmlAttribute(m_Markdown, start, len, hint));
+                dest.Append(">");
 				Render(dest, str);
 				dest.Append("</p>\n");
 			}
 		}
+        public string GetDataPosHtmlAttribute(Markdown m,int start,int len, GlobalPositionHint hint)
+        {
+            if (m.RenderPos == false) return "";
 
+            if (hint == null) return "";
+
+            int pos = hint.GetGlobalPosAt(start);
+
+            return " data-pos='" + pos.ToString() + "' data-len='" + len.ToString() + "'";
+        }
+        public string GetDataPosHtmlAttribute(Token t)
+        {
+            if (t == null) return "";
+            if (t.hint == null) return "";
+            int pos = t.hint.GetGlobalPosAt(t.startOffset);
+            int len = t.length;
+
+            return " data-pos='" + pos.ToString() + "' data-len='" + len.ToString() + "'";
+        }
         internal void Format(StringBuilder dest, string str, GlobalPositionHint hint = null)
 		{
 			Format(dest, str, 0, str.Length, hint);
@@ -196,7 +218,9 @@ namespace MarkdownDeep
 						break;
 
 					case TokenType.open_em:
-						sb.Append("<em>");
+						sb.Append("<em");
+                        sb.Append(GetDataPosHtmlAttribute(t));
+                        sb.Append(">");
 						break;
 
 					case TokenType.close_em:
@@ -204,7 +228,9 @@ namespace MarkdownDeep
 						break;
 
 					case TokenType.open_strong:
-						sb.Append("<strong>");
+						sb.Append("<strong");
+                        sb.Append(GetDataPosHtmlAttribute(t));
+                        sb.Append(">");
 						break;
 
 					case TokenType.close_strong:
@@ -212,7 +238,9 @@ namespace MarkdownDeep
 						break;
 
 					case TokenType.code_span:
-						sb.Append("<code>");
+						sb.Append("<code");
+                        sb.Append(GetDataPosHtmlAttribute(t));
+                        sb.Append(">");
 						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length, t.hint);
 						sb.Append("</code>");
 						break;
@@ -223,21 +251,25 @@ namespace MarkdownDeep
 						var sf = new SpanFormatter(m_Markdown);
 						sf.DisableLinks = true;
 
-						li.def.RenderLink(m_Markdown, sb, sf.Format(li.link_text, t.hint));
+                        string posAttribute = GetDataPosHtmlAttribute(t);
+                        li.def.RenderLink(m_Markdown, sb, sf.Format(li.link_text, t.hint), posAttribute);
 						break;
 					}
 
 					case TokenType.img:
 					{
 						LinkInfo li = (LinkInfo)t.data;
-						li.def.RenderImg(m_Markdown, sb, li.link_text, t.hint);
+                        string posAttribute = GetDataPosHtmlAttribute(t);
+						li.def.RenderImg(m_Markdown, sb, li.link_text, t.hint, optionAttributes: posAttribute);
 						break;
 					}
 
 					case TokenType.footnote:
 					{
 						FootnoteReference r=(FootnoteReference)t.data;
-						sb.Append("<sup id=\"fnref:");
+                        sb.Append("<sup");
+                        sb.Append(GetDataPosHtmlAttribute(t));
+                        sb.Append(" id=\"fnref:");
 						sb.Append(r.id);
 						sb.Append("\"><a href=\"#fn:");
 						sb.Append(r.id);
@@ -251,6 +283,7 @@ namespace MarkdownDeep
 					{
 						Abbreviation a = (Abbreviation)t.data;
 						sb.Append("<abbr");
+                        sb.Append(GetDataPosHtmlAttribute(t));
 						if (!String.IsNullOrEmpty(a.Title))
 						{
 							sb.Append(" title=\"");

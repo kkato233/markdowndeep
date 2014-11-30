@@ -68,7 +68,7 @@ namespace MarkdownDeep
             {
                 for (int i = 0; i < len; i++)
                 {
-                    pos.Add(hint.GetGlobalPosAt(i));
+                    pos.Add(hint.GetGlobalPosAt(startPos + i));
                 }
             }
             else
@@ -84,7 +84,7 @@ namespace MarkdownDeep
 
         public GlobalPositionHint Build()
         {
-            GlobalPositionHint ans = new GlobalPositionHint(baseString);
+            GlobalPositionHint ans = new GlobalPositionHint(baseString,pos);
             return ans;
         }
     }

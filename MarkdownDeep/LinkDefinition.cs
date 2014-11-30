@@ -58,7 +58,7 @@ namespace MarkdownDeep
 		}
 
 
-		internal void RenderLink(Markdown m, StringBuilder b, string link_text)
+        internal void RenderLink(Markdown m, StringBuilder b, string link_text, string posAttribute)
 		{
 			if (url.StartsWith("mailto:"))
 			{
@@ -71,6 +71,7 @@ namespace MarkdownDeep
 					Utils.SmartHtmlEncodeAmpsAndAngles(b, title);
 					b.Append('\"');
 				}
+                b.Append(posAttribute);
 				b.Append('>');
 				Utils.HtmlRandomize(b, link_text);
 				b.Append("</a>");
@@ -103,7 +104,7 @@ namespace MarkdownDeep
 			}
 		}
 
-		internal void RenderImg(Markdown m, StringBuilder b, string alt_text,GlobalPositionHint hint = null)
+		internal void RenderImg(Markdown m, StringBuilder b, string alt_text,GlobalPositionHint hint = null, string cssClass = null, string optionAttributes = null)
 		{
 			HtmlTag tag = new HtmlTag("img");
 
@@ -127,12 +128,17 @@ namespace MarkdownDeep
 				Utils.SmartHtmlEncodeAmpsAndAngles(sb, title);
 				tag.attributes["title"] = sb.ToString();
 			}
+            
+			if (!String.IsNullOrEmpty(cssClass))
+			{
+				tag.attributes["class"] = cssClass;
+			}
 
 			tag.closed = true;
 
 			m.OnPrepareImage(tag, m.RenderingTitledImage);
 
-			tag.RenderOpening(b);
+			tag.RenderOpening(b, optionAttributes);
 		}
 
 

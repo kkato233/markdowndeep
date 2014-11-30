@@ -994,7 +994,7 @@ namespace MarkdownDeep
 		Dictionary<string, Abbreviation> m_AbbreviationMap;
 		List<Abbreviation> m_AbbreviationList;
 
-	
-	}
+        public bool RenderPos { get; set; }
+    }
 
 }
