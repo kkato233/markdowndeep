@@ -30,7 +30,7 @@ namespace MarkdownDeep
 		}
 
 
-		internal void FormatParagraph(StringBuilder dest, string str, int start, int len)
+        internal void FormatParagraph(StringBuilder dest, string str, int start, int len, GlobalPositionHint hint = null)
 		{
 			// Parse the string into a list of tokens
 			Tokenize(str, start, len);
@@ -71,25 +71,25 @@ namespace MarkdownDeep
 			}
 		}
 
-		internal void Format(StringBuilder dest, string str)
+        internal void Format(StringBuilder dest, string str, GlobalPositionHint hint = null)
 		{
-			Format(dest, str, 0, str.Length);
+			Format(dest, str, 0, str.Length, hint);
 		}
 
 		// Format a range in an input string and write it to the destination string builder.
-		internal void Format(StringBuilder dest, string str, int start, int len)
+		internal void Format(StringBuilder dest, string str, int start, int len, GlobalPositionHint hint = null)
 		{
 			// Parse the string into a list of tokens
-			Tokenize(str, start, len);
+			Tokenize(str, start, len, hint);
 
 			// Render all tokens
-			Render(dest, str);
+			Render(dest, str, hint);
 		}
 
-		internal void FormatPlain(StringBuilder dest, string str, int start, int len)
+		internal void FormatPlain(StringBuilder dest, string str, int start, int len, GlobalPositionHint hint = null)
 		{
 			// Parse the string into a list of tokens
-			Tokenize(str, start, len);
+			Tokenize(str, start, len, hint);
 
 			// Render all tokens
 			RenderPlain(dest, str);
@@ -97,10 +97,10 @@ namespace MarkdownDeep
 
 		// Format a string and return it as a new string
 		// (used in formatting the text of links)
-		internal string Format(string str)
+        internal string Format(string str, GlobalPositionHint hint = null)
 		{
 			StringBuilder dest = new StringBuilder();
-			Format(dest, str, 0, str.Length);
+			Format(dest, str, 0, str.Length, hint);
 			return dest.ToString();
 		}
 
@@ -167,7 +167,7 @@ namespace MarkdownDeep
 		}
 
 		// Render a list of tokens to a destinatino string builder.
-		private void Render(StringBuilder sb, string str)
+		private void Render(StringBuilder sb, string str, GlobalPositionHint hint = null)
 		{
 			foreach (Token t in m_Tokens)
 			{
@@ -175,12 +175,12 @@ namespace MarkdownDeep
 				{
 					case TokenType.Text:
 						// Append encoded text
-						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length);
+						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length, t.hint);
 						break;
 
 					case TokenType.HtmlTag:
 						// Append html as is
-						Utils.SmartHtmlEncodeAmps(sb, str, t.startOffset, t.length);
+						Utils.SmartHtmlEncodeAmps(sb, str, t.startOffset, t.length, t.hint);
 						break;
 
 					case TokenType.Html:
@@ -213,7 +213,7 @@ namespace MarkdownDeep
 
 					case TokenType.code_span:
 						sb.Append("<code>");
-						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length);
+						m_Markdown.HtmlEncode(sb, str, t.startOffset, t.length, t.hint);
 						sb.Append("</code>");
 						break;
 
@@ -223,14 +223,14 @@ namespace MarkdownDeep
 						var sf = new SpanFormatter(m_Markdown);
 						sf.DisableLinks = true;
 
-						li.def.RenderLink(m_Markdown, sb, sf.Format(li.link_text));
+						li.def.RenderLink(m_Markdown, sb, sf.Format(li.link_text, t.hint));
 						break;
 					}
 
 					case TokenType.img:
 					{
 						LinkInfo li = (LinkInfo)t.data;
-						li.def.RenderImg(m_Markdown, sb, li.link_text);
+						li.def.RenderImg(m_Markdown, sb, li.link_text, t.hint);
 						break;
 					}
 
@@ -325,10 +325,10 @@ namespace MarkdownDeep
 		}
 
 		// Scan the input string, creating tokens for anything special 
-		public void Tokenize(string str, int start, int len)
+		public void Tokenize(string str, int start, int len, GlobalPositionHint hint = null)
 		{
 			// Prepare
-			base.Reset(str, start, len);
+			base.Reset(str, start, len, hint);
 			m_Tokens.Clear();
 
 			List<Token> emphasis_marks = null;
@@ -921,7 +921,7 @@ namespace MarkdownDeep
 					if (li!=null)
 					{
 						SkipForward(1);
-						return CreateToken(TokenType.link, li);
+						return CreateToken(TokenType.link, li, hint);
 					}
 
 					return null;
@@ -1124,7 +1124,7 @@ namespace MarkdownDeep
 		#region Token Pooling
 
 		// CreateToken - create or re-use a token object
-		internal Token CreateToken(TokenType type, int startOffset, int length)
+		internal Token CreateToken(TokenType type, int startOffset, int length, GlobalPositionHint hint = null)
 		{
 			if (m_SpareTokens.Count != 0)
 			{
@@ -1133,14 +1133,15 @@ namespace MarkdownDeep
 				t.startOffset = startOffset;
 				t.length = length;
 				t.data = null;
+                t.hint = hint;
 				return t;
 			}
 			else
-				return new Token(type, startOffset, length);
+				return new Token(type, startOffset, length, hint);
 		}
 
 		// CreateToken - create or re-use a token object
-		internal Token CreateToken(TokenType type, object data)
+		internal Token CreateToken(TokenType type, object data, GlobalPositionHint hint = null)
 		{
 			if (m_SpareTokens.Count != 0)
 			{

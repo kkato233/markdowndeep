@@ -56,7 +56,7 @@ namespace MarkdownDeep
 			m_AbbreviationList = null;
 
 			// Process blocks
-			return new BlockProcessor(this, MarkdownInHtml).Process(str);
+			return new BlockProcessor(this, MarkdownInHtml).Process(str,new GlobalPositionHint(str));
 		}
 		public string Transform(string str)
 		{
@@ -813,9 +813,9 @@ namespace MarkdownDeep
 		}
 
 		// HtmlEncode a range in a string to a specified string builder
-		internal void HtmlEncode(StringBuilder dest, string str, int start, int len)
+		internal void HtmlEncode(StringBuilder dest, string str, int start, int len,GlobalPositionHint hint=null)
 		{
-			m_StringScanner.Reset(str, start, len);
+			m_StringScanner.Reset(str, start, len, hint);
 			var p = m_StringScanner;
 			while (!p.eof)
 			{
@@ -848,9 +848,9 @@ namespace MarkdownDeep
 
 
 		// HtmlEncode a string, also converting tabs to spaces (used by CodeBlocks)
-		internal void HtmlEncodeAndConvertTabsToSpaces(StringBuilder dest, string str, int start, int len)
+		internal void HtmlEncodeAndConvertTabsToSpaces(StringBuilder dest, string str, int start, int len,GlobalPositionHint hint = null)
 		{
-			m_StringScanner.Reset(str, start, len);
+			m_StringScanner.Reset(str, start, len, hint);
 			var p = m_StringScanner;
 			int pos = 0;
 			while (!p.eof)

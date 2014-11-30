@@ -33,37 +33,37 @@ namespace MarkdownDeep
 		}
 
 		// Constructor
-		public StringScanner(string str)
+		public StringScanner(string str,GlobalPositionHint hint = null)
 		{
-			Reset(str);
+			Reset(str, hint);
 		}
 
 		// Constructor
-		public StringScanner(string str, int pos)
+		public StringScanner(string str, int pos,GlobalPositionHint hint = null)
 		{
-			Reset(str, pos);
+			Reset(str, pos, hint);
 		}
 
 		// Constructor
-		public StringScanner(string str, int pos, int len)
+		public StringScanner(string str, int pos, int len,GlobalPositionHint hint = null)
 		{
-			Reset(str, pos, len);
+			Reset(str, pos, len, hint);
 		}
 
 		// Reset
-		public void Reset(string str)
+		public void Reset(string str,GlobalPositionHint hint = null)
 		{
-			Reset(str, 0, str!=null ? str.Length : 0);
+			Reset(str, 0, str!=null ? str.Length : 0, hint);
 		}
 
 		// Reset
-		public void Reset(string str, int pos)
+        public void Reset(string str, int pos, GlobalPositionHint hint = null)
 		{
-			Reset(str, pos, str!=null ? str.Length - pos : 0);
+			Reset(str, pos, str!=null ? str.Length - pos : 0, hint);
 		}
 
 		// Reset
-		public void Reset(string str, int pos, int len)
+		public void Reset(string str, int pos, int len,GlobalPositionHint hint = null)
 		{
 			if (str == null)
 				str = "";
@@ -81,6 +81,8 @@ namespace MarkdownDeep
 
 			if (end > str.Length)
 				end = str.Length;
+
+            this.hint = hint;
 		}
 
 		// Get the entire input string
@@ -537,5 +539,6 @@ namespace MarkdownDeep
 		int pos;
 		int end;
 		int mark;
+        protected GlobalPositionHint hint;
 	}
 }

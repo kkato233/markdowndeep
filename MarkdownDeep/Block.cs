@@ -73,6 +73,7 @@ namespace MarkdownDeep
 		{
 			get
 			{
+                // TODO: オリジナルの文字の位置を示す Hint も同時に作成する Content が欲しい ContentAndHint 
 				switch (blockType)
 				{
 					case BlockType.codeblock:
@@ -148,11 +149,11 @@ namespace MarkdownDeep
 					return;
 
 				case BlockType.p:
-					m.SpanFormatter.FormatParagraph(b, buf, contentStart, contentLen);
+					m.SpanFormatter.FormatParagraph(b, buf, contentStart, contentLen, hint);
 					break;
 
 				case BlockType.span:
-					m.SpanFormatter.Format(b, buf, contentStart, contentLen);
+					m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
 					b.Append("\n");
 					break;
 
@@ -181,7 +182,7 @@ namespace MarkdownDeep
 					{
 						b.Append("<" + blockType.ToString() + ">");
 					}
-					m.SpanFormatter.Format(b, buf, contentStart, contentLen);
+					m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
 					b.Append("</" + blockType.ToString() + ">\n");
 					break;
 
@@ -195,7 +196,7 @@ namespace MarkdownDeep
 				case BlockType.ol_li:
 				case BlockType.ul_li:
 					b.Append("<li>");
-					m.SpanFormatter.Format(b, buf, contentStart, contentLen);
+                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
 					b.Append("</li>\n");
 					break;
 
@@ -207,7 +208,7 @@ namespace MarkdownDeep
 						RenderChildren(m, b);
 					}
 					else
-						m.SpanFormatter.Format(b, buf, contentStart, contentLen);
+                        m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
 					b.Append("</dd>\n");
 					break;
 
@@ -242,7 +243,7 @@ namespace MarkdownDeep
 					return;
 
 				case BlockType.unsafe_html:
-					m.HtmlEncode(b, buf, contentStart, contentLen);
+					m.HtmlEncode(b, buf, contentStart, contentLen, hint);
 					return;
 
 				case BlockType.codeblock:
@@ -251,7 +252,7 @@ namespace MarkdownDeep
 						var sb = new StringBuilder();
 						foreach (var line in children)
 						{
-							m.HtmlEncodeAndConvertTabsToSpaces(sb, line.buf, line.contentStart, line.contentLen);
+							m.HtmlEncodeAndConvertTabsToSpaces(sb, line.buf, line.contentStart, line.contentLen, line.hint);
 							sb.Append("\n");
 						}
 						b.Append(m.FormatCodeBlock(m, sb.ToString()));
@@ -261,7 +262,7 @@ namespace MarkdownDeep
 						b.Append("<pre><code>");
 						foreach (var line in children)
 						{
-							m.HtmlEncodeAndConvertTabsToSpaces(b, line.buf, line.contentStart, line.contentLen);
+							m.HtmlEncodeAndConvertTabsToSpaces(b, line.buf, line.contentStart, line.contentLen, line.hint);
 							b.Append("\n");
 						}
 						b.Append("</code></pre>\n\n");
@@ -326,7 +327,7 @@ namespace MarkdownDeep
 					b.Append("<p>");
 					if (contentLen > 0)
 					{
-						m.SpanFormatter.Format(b, buf, contentStart, contentLen);
+                        m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
 						b.Append("&nbsp;");
 					}
 					b.Append((string)data);
@@ -335,7 +336,7 @@ namespace MarkdownDeep
 
 				default:
 					b.Append("<" + blockType.ToString() + ">");
-					m.SpanFormatter.Format(b, buf, contentStart, contentLen);
+                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
 					b.Append("</" + blockType.ToString() + ">\n");
 					break;
 			}
@@ -350,7 +351,7 @@ namespace MarkdownDeep
 
 				case BlockType.p:
 				case BlockType.span:
-					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen);
+					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
 					b.Append(" ");
 					break;
 
@@ -360,7 +361,7 @@ namespace MarkdownDeep
 				case BlockType.h4:
 				case BlockType.h5:
 				case BlockType.h6:
-					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen);
+					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
 					b.Append(" - ");
 					break;
 
@@ -368,7 +369,7 @@ namespace MarkdownDeep
 				case BlockType.ol_li:
 				case BlockType.ul_li:
 					b.Append("* ");
-					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen);
+					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
 					b.Append(" ");
 					break;
 
@@ -379,13 +380,14 @@ namespace MarkdownDeep
 						RenderChildrenPlain(m, b);
 					}
 					else
-						m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen);
+						m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
 					break;
 
 				case BlockType.dt:
 					{
 						if (children == null)
 						{
+                            // TODO: Content Split した時に Hint も分割する機能が必要
 							foreach (var l in Content.Split('\n'))
 							{
 								var str = l.Trim();
@@ -477,6 +479,7 @@ namespace MarkdownDeep
 			contentLen = other.contentLen;
 			lineStart = other.lineStart;
 			lineLen = other.lineLen;
+            hint = other.hint;
 			return this;
 		}
 
@@ -488,5 +491,6 @@ namespace MarkdownDeep
 		internal int lineLen;
 		internal object data;			// content depends on block type
 		internal List<Block> children;
+        internal GlobalPositionHint hint;
 	}
 }

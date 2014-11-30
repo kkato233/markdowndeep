@@ -103,7 +103,7 @@ namespace MarkdownDeep
 			}
 		}
 
-		internal void RenderImg(Markdown m, StringBuilder b, string alt_text)
+		internal void RenderImg(Markdown m, StringBuilder b, string alt_text,GlobalPositionHint hint = null)
 		{
 			HtmlTag tag = new HtmlTag("img");
 
