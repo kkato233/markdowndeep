@@ -21,7 +21,7 @@ namespace MarkdownDeep
 {
 	// Some block types are only used during block parsing, some
 	// are only used during rendering and some are used during both
-	internal enum BlockType
+	public enum BlockType
 	{
 		Blank,			// blank line (parse only)
 		h1,				// headings (render and parse)
@@ -57,7 +57,7 @@ namespace MarkdownDeep
 		p_footnote,		// paragraph with footnote return link append.  Return link string is in `data`.
 	}
 
-	class Block
+	public class Block
 	{
 		internal Block()
 		{
@@ -77,7 +77,7 @@ namespace MarkdownDeep
 				switch (blockType)
 				{
 					case BlockType.codeblock:
-						StringBuilder s = new StringBuilder();
+                        StringBuilder s = new StringBuilder();
 						foreach (var line in children)
 						{
 							s.Append(line.Content);
@@ -98,23 +98,41 @@ namespace MarkdownDeep
 		{
 			get
 			{
-				return lineStart == 0 ? contentStart : lineStart;
+				return lineStart == null ? contentStart : lineStart;
 			}
 		}
 
-		internal void RenderChildren(Markdown m, StringBuilder b)
+        public int LineLength
+        {
+            get
+            {
+                return lineLen;
+            }
+        }
+
+        internal void RenderChildren(Markdown m, StringBuilder b)
 		{
 			foreach (var block in children)
 			{
-				block.Render(m, b);
-			}
+                block.InitRenderPositionList();
+                
+                block.Render(m, b);
+            
+                this.positionList.AddRange(block.GetRenderPositionList());
+                block.InitRenderPositionList();
+            }
 		}
 
-		internal void RenderChildrenPlain(Markdown m, StringBuilder b)
+        internal void RenderChildrenPlain(Markdown m, StringBuilder b)
 		{
 			foreach (var block in children)
 			{
-				block.RenderPlain(m, b);
+                block.InitRenderPositionList();
+
+                block.RenderPlain(m, b);
+
+                this.positionList.AddRange(block.GetRenderPositionList());
+                block.InitRenderPositionList();
 			}
 		}
 
@@ -141,7 +159,19 @@ namespace MarkdownDeep
 			return id;
 		}
 
-		internal void Render(Markdown m, StringBuilder b)
+        List<RenderPosition> positionList = new List<RenderPosition>();
+
+        public void InitRenderPositionList()
+        {
+            positionList = new List<RenderPosition>();
+        }
+
+        public List<RenderPosition> GetRenderPositionList()
+        {
+            return positionList.ToList();
+        }
+
+        public void Render(Markdown m, StringBuilder b)
 		{
 			switch (blockType)
 			{
@@ -149,11 +179,11 @@ namespace MarkdownDeep
 					return;
 
 				case BlockType.p:
-					m.SpanFormatter.FormatParagraph(b, buf, contentStart, contentLen, hint);
+					m.SpanFormatter.FormatParagraph(b, buf, contentStart, contentLen, hint, positionList);
 					break;
 
 				case BlockType.span:
-					m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
+                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append("\n");
 					break;
 
@@ -183,7 +213,7 @@ namespace MarkdownDeep
 					{
 						b.Append("<" + blockType.ToString() + ">");
 					}
-					m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
+                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append("</" + blockType.ToString() + ">\n");
 					break;
 
@@ -201,7 +231,7 @@ namespace MarkdownDeep
 					b.Append("<li");
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">");
-                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
+                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append("</li>\n");
 					break;
 
@@ -212,10 +242,10 @@ namespace MarkdownDeep
 					if (children != null)
 					{
 						b.Append("\n");
-						RenderChildren(m, b);
+                        RenderChildren(m, b);
 					}
 					else
-                        m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
+                        m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append("</dd>\n");
 					break;
 
@@ -235,7 +265,7 @@ namespace MarkdownDeep
                         b.Append("<dt");
                         b.Append(this.GetDataPosHtmlAttribute(m));
                         b.Append(">\n");
-						RenderChildren(m, b);
+                        RenderChildren(m, b);
 						b.Append("</dt>\n");
 					}
 					break;
@@ -245,7 +275,7 @@ namespace MarkdownDeep
 					b.Append("<dl");
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">\n");
-					RenderChildren(m, b);
+                    RenderChildren(m, b);
 					b.Append("</dl>\n");
 					return;
 
@@ -260,7 +290,7 @@ namespace MarkdownDeep
 				case BlockType.codeblock:
 					if (m.FormatCodeBlock != null)
 					{
-						var sb = new StringBuilder();
+                        var sb = new StringBuilder();
 						foreach (var line in children)
 						{
 							m.HtmlEncodeAndConvertTabsToSpaces(sb, line.buf, line.contentStart, line.contentLen, line.hint);
@@ -286,7 +316,7 @@ namespace MarkdownDeep
 					b.Append("<blockquote");
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">\n");
-					RenderChildren(m, b);
+                    RenderChildren(m, b);
 					b.Append("</blockquote>\n");
 					return;
 
@@ -294,7 +324,7 @@ namespace MarkdownDeep
 					b.Append("<li");
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">\n");
-					RenderChildren(m, b);
+                    RenderChildren(m, b);
 					b.Append("</li>\n");
 					return;
 
@@ -302,7 +332,7 @@ namespace MarkdownDeep
 					b.Append("<ol");
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">\n");
-					RenderChildren(m, b);
+                    RenderChildren(m, b);
 					b.Append("</ol>\n");
 					return;
 
@@ -310,7 +340,7 @@ namespace MarkdownDeep
 					b.Append("<ul");
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">\n");
-					RenderChildren(m, b);
+                    RenderChildren(m, b);
 					b.Append("</ul>\n");
 					return;
 
@@ -331,7 +361,7 @@ namespace MarkdownDeep
 
                     tag.RenderOpening(b, optionAttribute);
 					b.Append("\n");
-					RenderChildren(m, b);
+                    RenderChildren(m, b);
 					tag.RenderClosing(b);
 					b.Append("\n");
 					return;
@@ -351,7 +381,7 @@ namespace MarkdownDeep
                     b.Append(">");
 					if (contentLen > 0)
 					{
-                        m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
+                        m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 						b.Append("&nbsp;");
 					}
 					b.Append((string)data);
@@ -366,7 +396,7 @@ namespace MarkdownDeep
 					b.Append("<" + blockType.ToString());
                     b.Append(this.GetDataPosHtmlAttribute(m));
                     b.Append(">");
-                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint);
+                    m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append("</" + blockType.ToString() + ">\n");
 					break;
 			}
@@ -381,7 +411,7 @@ namespace MarkdownDeep
 
 				case BlockType.p:
 				case BlockType.span:
-					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
+					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append(" ");
 					break;
 
@@ -391,7 +421,7 @@ namespace MarkdownDeep
 				case BlockType.h4:
 				case BlockType.h5:
 				case BlockType.h6:
-					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
+                    m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append(" - ");
 					break;
 
@@ -399,7 +429,7 @@ namespace MarkdownDeep
 				case BlockType.ol_li:
 				case BlockType.ul_li:
 					b.Append("* ");
-					m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
+                    m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append(" ");
 					break;
 
@@ -407,10 +437,10 @@ namespace MarkdownDeep
 					if (children != null)
 					{
 						b.Append("\n");
-						RenderChildrenPlain(m, b);
+                        RenderChildrenPlain(m, b);
 					}
 					else
-						m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint);
+                        m.SpanFormatter.FormatPlain(b, buf, contentStart, contentLen, hint, positionList);
 					break;
 
 				case BlockType.dt:
@@ -426,13 +456,13 @@ namespace MarkdownDeep
 						}
 						else
 						{
-							RenderChildrenPlain(m, b);
+                            RenderChildrenPlain(m, b);
 						}
 						break;
 					}
 
 				case BlockType.dl:
-					RenderChildrenPlain(m, b);
+                    RenderChildrenPlain(m, b);
 					return;
 
 				case BlockType.codeblock:
@@ -448,7 +478,7 @@ namespace MarkdownDeep
 				case BlockType.ol:
 				case BlockType.ul:
 				case BlockType.HtmlTag:
-					RenderChildrenPlain(m, b);
+                    RenderChildrenPlain(m, b);
 					return;
 			}
 		}
@@ -512,7 +542,13 @@ namespace MarkdownDeep
             hint = other.hint;
 			return this;
 		}
-
+        public BlockType BlockType
+        {
+            get
+            {
+                return this.blockType;
+            }
+        }
 		internal BlockType blockType;
 		internal string buf;
 		internal int contentStart;

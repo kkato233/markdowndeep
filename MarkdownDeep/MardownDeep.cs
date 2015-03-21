@@ -35,8 +35,8 @@ namespace MarkdownDeep
 		public Markdown()
 		{
 			HtmlClassFootnotes = "footnotes";
-			m_StringBuilder = new StringBuilder();
-			m_StringBuilderFinal = new StringBuilder();
+            m_StringBuilder = new StringBuilder();
+            m_StringBuilderFinal = new StringBuilder();
 			m_StringScanner = new StringScanner();
 			m_SpanFormatter = new SpanFormatter(this);
 			m_LinkDefinitions = new Dictionary<string, LinkDefinition>(StringComparer.CurrentCultureIgnoreCase);
@@ -45,7 +45,7 @@ namespace MarkdownDeep
 			m_UsedHeaderIDs = new Dictionary<string, bool>();
 		}
 
-		internal List<Block> ProcessBlocks(string str)
+		public List<Block> ProcessBlocks(string str)
 		{
 			// Reset the list of link definitions
 			m_LinkDefinitions.Clear();
@@ -64,9 +64,20 @@ namespace MarkdownDeep
 			return Transform(str, out defs);
 		}
 
+        public List<RenderPosition> PositionList
+        {
+            get
+            {
+                return this._positionList;
+            }
+        }
+        private List<RenderPosition> _positionList = new List<RenderPosition>();
+
 		// Transform a string
 		public string Transform(string str, out Dictionary<string, LinkDefinition> definitions)
 		{
+            _positionList = new List<RenderPosition>();
+
 			// Build blocks
 			var blocks = ProcessBlocks(str);
 
@@ -133,7 +144,7 @@ namespace MarkdownDeep
 						OnSectionHeader(sb, iSection);
 
 						// Section Heading
-						b.Render(this, sb);
+                        b.Render(this, sb);
 
 						// Section Heading suffix
 						OnSectionHeadingSuffix(sb, iSection);
@@ -141,7 +152,7 @@ namespace MarkdownDeep
 					else
 					{
 						// Regular section
-						b.Render(this, sb);
+                        b.Render(this, sb);
 					}
 				}
 
@@ -187,7 +198,7 @@ namespace MarkdownDeep
 						}
 
 
-						fn.Render(this, sb);
+                        fn.Render(this, sb);
 
 						sb.Append("</li>\n");
 					}
@@ -672,7 +683,7 @@ namespace MarkdownDeep
 		// Join previously split sections back into one document
 		public static string JoinUserSections(List<string> sections)
 		{
-			var sb = new StringBuilder();
+            var sb = new StringBuilder();
 			for (int i = 0; i < sections.Count; i++)
 			{
 				if (i > 0)
@@ -732,7 +743,7 @@ namespace MarkdownDeep
 		// Join previously split sections back into one document
 		public static string JoinSections(List<string> sections)
 		{
-			var sb = new StringBuilder();
+            var sb = new StringBuilder();
 			for (int i = 0; i < sections.Count; i++)
 			{
 				if (i > 0)
@@ -984,7 +995,7 @@ namespace MarkdownDeep
 
 		// Attributes
 		StringBuilder m_StringBuilder;
-		StringBuilder m_StringBuilderFinal;
+        StringBuilder m_StringBuilderFinal;
 		StringScanner m_StringScanner;
 		SpanFormatter m_SpanFormatter;
 		Dictionary<string, LinkDefinition> m_LinkDefinitions;

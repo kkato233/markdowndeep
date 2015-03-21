@@ -630,7 +630,7 @@ namespace MarkdownDeep
 				// Create the heading block
 				b.contentEnd = position;
 
-				SkipToEol();
+                SkipToEol();
 				return BlockType.h1 + (level - 1);
 			}
 

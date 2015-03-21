@@ -339,7 +339,7 @@ namespace MarkdownDeep
 			if (str == null || str.IndexOf('\\')==-1)
 				return str;
 
-			var b = new StringBuilder();
+            var b = new StringBuilder();
 			for (int i = 0; i < str.Length; i++)
 			{
 				if (str[i] == '\\' && i+1<str.Length && IsEscapableChar(str[i+1], ExtraMode))
@@ -365,7 +365,7 @@ namespace MarkdownDeep
 			if (str.IndexOfAny(lineends) < 0)
 				return str;
 
-			StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 			StringScanner sp = new StringScanner(str);
 			while (!sp.eof)
 			{

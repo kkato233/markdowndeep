@@ -5,6 +5,7 @@ using System.Text;
 using System.Reflection;
 using NUnit.Framework;
 using System.Windows.Forms;
+using MarkdownDeep;
 
 namespace MarkdownDeepTests
 {
@@ -33,7 +34,7 @@ namespace MarkdownDeepTests
 	
 		public static string strip_redundant_whitespace(string str)
 		{
-			StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
 			str = str.Replace("\r\n", "\n");
 
