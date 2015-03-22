@@ -98,7 +98,20 @@ namespace MarkdownDeep
 		{
 			get
 			{
-				return lineStart == null ? contentStart : lineStart;
+                return _lineStart == null ? contentStart : lineStart;
+
+                if (lineStart == 0)
+                {
+                    if (this.children != null && this.children.Any())
+                    {
+                        return this.children.Min(r => r.lineStart);
+                    }
+                    return contentStart;
+                }
+                else
+                {
+                    return lineStart;
+                }
 			}
 		}
 
@@ -106,9 +119,25 @@ namespace MarkdownDeep
         {
             get
             {
+                return _lineLen == null ? contentLen : lineLen;
+
+                if (lineLen == 0)
+                {
+                    if (this.children != null && this.children.Any())
+                    {
+                        int start = this.LineStart;
+                        int last = this.children.Max(r => (r.LineStart + r.lineLen));
+
+                        return last - start;
+                    }
+                    return contentLen;
+                }
+                else
+                {
                 return lineLen;
             }
         }
+		}
 
         internal void RenderChildren(Markdown m, StringBuilder b)
 		{
@@ -213,6 +242,17 @@ namespace MarkdownDeep
 					{
 						b.Append("<" + blockType.ToString() + ">");
 					}
+#if true
+                    if (this.hint != null)
+                    {
+                        positionList.Add(new RenderPosition()
+                        {
+                            BlockType = blockType,
+                            Start = this.hint.GetGlobalPosAt(contentStart),
+                            Len = contentLen,
+                        });
+                    }
+#endif
                     m.SpanFormatter.Format(b, buf, contentStart, contentLen, hint, positionList);
 					b.Append("</" + blockType.ToString() + ">\n");
 					break;
@@ -302,7 +342,9 @@ namespace MarkdownDeep
 					{
                         b.Append("<pre");
                         b.Append(this.GetDataPosHtmlAttribute(m));
-                        b.Append("><code>");
+                        b.Append("><code");
+                        b.Append(this.GetCodeLangAttribute(m));
+                        b.Append(">");
 						foreach (var line in children)
 						{
 							m.HtmlEncodeAndConvertTabsToSpaces(b, line.buf, line.contentStart, line.contentLen, line.hint);
@@ -553,10 +595,33 @@ namespace MarkdownDeep
 		internal string buf;
 		internal int contentStart;
 		internal int contentLen;
-		internal int lineStart;
-		internal int lineLen;
+		internal int lineStart
+        {
+            get {
+                return this._lineStart ?? 0;
+            }
+            set {
+                _lineStart = value;
+            }
+        }
+        int ? _lineStart = null;
+
+		internal int lineLen
+        {
+            get
+            {
+                return this._lineLen ?? 0;
+            }
+            set
+            {
+                this._lineLen = value;
+            }
+        }
+
+        int? _lineLen;
 		internal object data;			// content depends on block type
 		internal List<Block> children;
+		internal string codeBlockLang;
         internal GlobalPositionHint hint;
 
         public string GetDataPosHtmlAttribute(Markdown m)
@@ -564,11 +629,21 @@ namespace MarkdownDeep
             if (m.RenderPos == false) return "";
 
             if (this.hint == null) return "";
+            int len = this.contentLen;
+            if (len == 0) return "";
 
             int pos = this.hint.GetGlobalPosAt(this.contentStart);
-            int len = this.contentLen;
 
             return " data-pos='" + pos.ToString() + "' data-len='" + len.ToString() + "'";
+        }
+
+        public string GetCodeLangAttribute(Markdown m)
+        {
+            if (m.RenderPos == false) return "";
+
+            if (string.IsNullOrEmpty(this.codeBlockLang)) return "";
+
+            return " class='lang-" + this.codeBlockLang.Trim() + "'";
         }
 
 	}
